@@ -7,6 +7,7 @@
 :root{
   --bg1:#5f78d9; --bg2:#3a4fac; --board:#232d63; --line:rgba(255,255,255,.09);
   --fg:#ffffff; --muted:#c3ccf7; --accent:#ffd166; --good:#18c98a;
+  --panel:#1b2253; /* pencerelerin dolu arka planı (eskiden tanımsızdı, pencereler saydam görünüyordu) */
   color-scheme:dark;
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -274,7 +275,7 @@ var LANG=(function(){ try{ var l=localStorage.getItem('renklibloklar_lang'); if 
 var TXT={
  tr:{ rank:'Sıralama', settings:'Ayarlar', undo:'Geri Al', shuffle:'Karıştır', hint:'İpucu',
   daily_title:'🎁 Günlük Ödül!', daily_ok:'Harika!', ad_title:'Hazırlanıyor…', ad_text:'Ödülün birazdan gelecek',
-  revive:'📺 Reklam İzle, Devam Et', revive_free:'▶️ Ücretsiz Devam Et', stuck_title:'Yer Kalmadı!', stuck_text:'Karıştır ile yeni parçalar al, oyuna devam et!', use_shuffle:'🔀 Karıştır ({0})', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
+  revive:'📺 Reklam İzle, Devam Et', revive_free:'▶️ Ücretsiz Devam Et', stuck_title:'Yer Kalmadı!', stuck_text:'Karıştır ile yeni parçalar al, oyuna devam et!', use_shuffle:'🔀 Karıştır ({0})', shuffle_ad:'📺 Reklam İzle, Karıştır', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
   nick:'Rumuzun', join:'Katıl', close:'Kapat', sound:'Ses', music:'Müzik', vib:'Titreşim', restart:'🔄 Yeniden Başla', lang_btn:'🌐 English', bomb:'BOMBA',
   new_record:'Yeni Rekor! 🏆', no_moves:'Hamle Kalmadı', score_best:'Skor: {0} — En iyi: {1}', replay:'Yeniden Oyna', no_thanks:'Hayır, Teşekkürler',
   reviving:'Canlanıyor…', revive_text:'Devam etme hakkın birazdan gelecek', reward_wait:'{0} ödülün birazdan gelecek',
@@ -293,7 +294,7 @@ var TXT={
   how_3:'🔙 Geri Al, 🔀 Karıştır ve 💡 İpucu seni kurtarır. Hiçbir parça sığmayınca oyun biter.' },
  en:{ rank:'Ranking', settings:'Settings', undo:'Undo', shuffle:'Shuffle', hint:'Hint',
   daily_title:'🎁 Daily Reward!', daily_ok:'Awesome!', ad_title:'Getting ready…', ad_text:'Your reward is coming up',
-  revive:'📺 Watch Ad, Continue', revive_free:'▶️ Continue for Free', stuck_title:'No Room Left!', stuck_text:'Shuffle for new pieces and keep playing!', use_shuffle:'🔀 Shuffle ({0})', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
+  revive:'📺 Watch Ad, Continue', revive_free:'▶️ Continue for Free', stuck_title:'No Room Left!', stuck_text:'Shuffle for new pieces and keep playing!', use_shuffle:'🔀 Shuffle ({0})', shuffle_ad:'📺 Watch Ad, Shuffle', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
   nick:'Nickname', join:'Join', close:'Close', sound:'Sound', music:'Music', vib:'Vibration', restart:'🔄 Restart', lang_btn:'🌐 Türkçe', bomb:'BOMB',
   new_record:'New Record! 🏆', no_moves:'No Moves Left', score_best:'Score: {0} — Best: {1}', replay:'Play Again', no_thanks:'No, Thanks',
   reviving:'Reviving…', revive_text:'Your revive is coming up', reward_wait:'Your {0} reward is coming up',
@@ -453,7 +454,7 @@ var SHAPES=[
   [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
 ];
 var cellSize, gap=0, PAD=4;
-var grid, score, best=0, over, dragging=false, recordBeaten=false, continuedThisGame=false;
+var grid, score, best=0, over, dragging=false, recordBeaten=false, continuedThisGame=false, adShuffleUsed=false;
 // şekiller uzunluğa göre kategorilere ayrılıyor; zorluk kategori AĞIRLIĞIYLA kontrol ediliyor
 // (kategori içindeki şekil SAYISI ağırlığı etkilemiyor — çok rotasyonlu T/L/J parçaları yüzünden
 // tetromino kategorisi orantısız kalabalıklaşmasın diye)
@@ -502,7 +503,7 @@ function newGame(){
   if (typeof flushScore==='function') flushScore();
   lastFlushedScore=0;
   try{ localStorage.removeItem('renklibloklar_save'); }catch(e){}
-  grid=freshGrid(); score=0; over=false; recordBeaten=false; seenStage=0; boardSeenStage=0; continuedThisGame=false;
+  grid=freshGrid(); score=0; over=false; recordBeaten=false; seenStage=0; boardSeenStage=0; continuedThisGame=false; adShuffleUsed=false;
   undoSnapshot=null; resolving=false;
   if (typeof Ads!=='undefined' && Ads) Ads.rewardedThisGame=false;
   applyBoardColor(0);
@@ -634,18 +635,20 @@ function canPlace(shape,r0,c0){
 }
 var goStage=1, goRankInfo=null, goRankLoading=false, goJingle=false;
 /* Oyun sonu üç aşamalı:
-   0) Yer kalmadı: Karıştır hakkı varsa onu kullanma teklifi (yeni parçalar sığacak şekilde seçilir;
-      Geri Al konmadı, aynı parçaları geri verdiği için çoğu zaman kurtarmıyor)
+   0) Yer kalmadı: Karıştır teklifi (yeni parçalar sığacak şekilde seçilir; Geri Al konmadı, aynı parçaları
+      geri verdiği için çoğu zaman kurtarmıyor). Hak varsa hak kullanılır; hak yoksa reklam izleyip Karıştır
+      (oyun başına 1 kez, yeni oyuncunun ilk 3 oyununda yok: o zaman direkt ücretsiz devam teklifi gelir)
    1) Reklam izleyip devam etme teklifi (oyun başına 1 kez)
    2) Sonuç kartı (skor + lig sıralaması + katıl)
    Kayıtlı oyun ancak 2. aşamada silinir; uygulama 0/1'de kapanırsa açılınca teklif tekrar gelir. */
 function canUseShuffle(){ return daily.charges.shuffle>0; }
+function canAdShuffle(){ return !adShuffleUsed && !Ads.isNewPlayer(); }
 function gameOverNoMoves(){
   over=true;
   flushScore();
   goJingle=false;
   goRankInfo=null; goRankLoading=true;
-  goStage = canUseShuffle() ? 0 : (continuedThisGame ? 2 : 1);
+  goStage = (canUseShuffle()||canAdShuffle()) ? 0 : (continuedThisGame ? 2 : 1);
   applyGoStage();
   overlay.hidden=false;
   if (typeof startGoRank==='function') startGoRank();
@@ -662,7 +665,8 @@ function applyGoStage(){
     mTitle.textContent=tx('stuck_title');
     mStars.textContent='🤔'; mStars.className='stars';
     mText.textContent=tx('stuck_text');
-    mShufBtn.textContent=tx('use_shuffle', daily.charges.shuffle||0);
+    mShufBtn.textContent = canUseShuffle() ? tx('use_shuffle', daily.charges.shuffle) : tx('shuffle_ad');
+    mShufBtn.classList.toggle('ad-continue-btn', !canUseShuffle());
     goLeagueEl.hidden=true; goJoinEl.hidden=true; return;
   }
   mTitle.textContent = recordBeaten ? tx('new_record') : tx('no_moves');
@@ -970,14 +974,24 @@ mAdBtn.addEventListener('click', function(){
   Ads.showRewarded(tx('revive_text'), function(){ Ads.rewardedThisGame=true; continueAfterAd(); },
                    function(){ overlay.hidden=false; });
 });
-mShufBtn.addEventListener('click', function(){ if (!canUseShuffle()) return; resumeFromStuck(); doShuffle(); });
+mShufBtn.addEventListener('click', function(){
+  if (canUseShuffle()){ resumeFromStuck(); doShuffle(); return; }
+  if (!canAdShuffle()) return;
+  /* hak yok: reklam izle → 1 Karıştır hakkı kazan ve hemen kullan (oyun başına 1 kez) */
+  overlay.hidden=true;
+  Ads.showRewarded(tx('reward_wait','🔀 '+tx('shuffle')), function(){
+    adShuffleUsed=true; Ads.rewardedThisGame=true;
+    daily.charges.shuffle=(daily.charges.shuffle||0)+1;
+    resumeFromStuck(); doShuffle();
+  }, function(){ overlay.hidden=false; });
+});
 window.addEventListener('resize', function(){ measure(); layoutBg(); renderGrid(); renderTray(); });
 var SAVE_KEY='renklibloklar_save';
 function saveGame(){
   try{
     if (over){ localStorage.removeItem(SAVE_KEY); return; }
     if (resolving || dragging || !grid || !(score>0)) return;
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, grid:grid, score:score, tray:trayPieces, cont:continuedThisGame, rb:recordBeaten, ss:seenStage, bs:boardSeenStage, pb:pendingBombPiece, pu:pendingUnlockColors, lf:(typeof lastFlushedScore==='number'?lastFlushedScore:0) }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, grid:grid, score:score, tray:trayPieces, cont:continuedThisGame, asu:adShuffleUsed, rb:recordBeaten, ss:seenStage, bs:boardSeenStage, pb:pendingBombPiece, pu:pendingUnlockColors, lf:(typeof lastFlushedScore==='number'?lastFlushedScore:0) }));
   }catch(e){}
 }
 function restoreGame(){
@@ -986,7 +1000,7 @@ function restoreGame(){
     var s=JSON.parse(raw);
     if (!s || s.v!==1 || !Array.isArray(s.grid) || s.grid.length!==N || !Array.isArray(s.tray) || s.tray.length!==3 || !(s.score>0)) return false;
     for (var i=0;i<N;i++){ if (!Array.isArray(s.grid[i]) || s.grid[i].length!==N) return false; }
-    grid=s.grid; score=s.score; over=false; recordBeaten=!!s.rb; seenStage=s.ss||0; boardSeenStage=s.bs||0; continuedThisGame=!!s.cont;
+    grid=s.grid; score=s.score; over=false; recordBeaten=!!s.rb; seenStage=s.ss||0; boardSeenStage=s.bs||0; continuedThisGame=!!s.cont; adShuffleUsed=!!s.asu;
     pendingBombPiece=!!s.pb; pendingUnlockColors=s.pu||null;
     undoSnapshot=null; resolving=false;
     applyBoardColor(score);
