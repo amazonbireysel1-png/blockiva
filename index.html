@@ -1555,6 +1555,49 @@ var Ads={
     next();
   }
 };
+/* ---- Gerçek AdMob (yalnızca Capacitor Android uygulamasında; web ve eski Median uygulamasında bu blok çalışmaz) ----
+   Ödüllü reklam hazır değilse en fazla 5 sn beklenir; yine gelmezse oyuncu cezalandırılmaz, ödül verilir.
+   Araya giren reklam hazır değilse hiç gösterilmez. AB kullanıcıları için Google onay (UMP) formu gösterilir. */
+(function(){
+  var C=window.Capacitor, AM=C && C.Plugins && C.Plugins.AdMob;
+  if (!AM || !(C.isNativePlatform && C.isNativePlatform())) return;
+  var IDS={ rew:'ca-app-pub-8950876657640160/3904601232', inter:'ca-app-pub-8950876657640160/1795498554' };
+  var rewReady=false, rewLoading=false, intReady=false, intLoading=false, earned=false, started=false;
+  function prepRew(){ if (!started || rewReady || rewLoading) return; rewLoading=true;
+    AM.prepareRewardVideoAd({adId:IDS.rew}).then(function(){ rewReady=true; }).catch(function(){}).then(function(){ rewLoading=false; }); }
+  function prepInt(){ if (!started || intReady || intLoading) return; intLoading=true;
+    AM.prepareInterstitial({adId:IDS.inter}).then(function(){ intReady=true; }).catch(function(){}).then(function(){ intLoading=false; }); }
+  AM.initialize({}).then(function(){
+    return AM.requestConsentInfo().then(function(ci){
+      if (ci && ci.isConsentFormAvailable && ci.status==='REQUIRED') return AM.showConsentForm();
+    }).catch(function(){});
+  }).catch(function(){}).then(function(){ started=true; prepRew(); prepInt(); });
+  AM.addListener('onRewardedVideoAdReward', function(){ earned=true; });
+  function once(ev, fn){ var h=null, done=false;
+    AM.addListener(ev, function(){ if (done) return; done=true; if (h && h.remove) h.remove(); fn(); }).then(function(x){ h=x; });
+    return function(){ if (done) return false; done=true; if (h && h.remove) h.remove(); return true; }; }
+  Ads.realRewarded=function(ok, fail){
+    function show(){
+      earned=false; rewReady=false;
+      var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){ if (earned) ok(); else fail(); prepRew(); }, 80); });
+      AM.showRewardVideoAd().then(function(){ earned=true; }).catch(function(){ if (cancel()){ ok(); prepRew(); } });
+    }
+    if (rewReady){ show(); return; }
+    adTitle.textContent=tx('ad_title'); adText.textContent=''; adOverlay.hidden=false; prepRew();
+    var t0=Date.now();
+    (function wait(){
+      if (rewReady){ adOverlay.hidden=true; show(); }
+      else if (Date.now()-t0>5000){ adOverlay.hidden=true; ok(); prepRew(); }
+      else setTimeout(wait, 250);
+    })();
+  };
+  Ads.realInterstitial=function(next){
+    if (!intReady){ prepInt(); next(); return; }
+    intReady=false;
+    var cancel=once('interstitialAdDismissed', function(){ prepInt(); next(); });
+    AM.showInterstitial().catch(function(){ if (cancel()){ prepInt(); next(); } });
+  };
+})();
 function watchAdFor(type, label){
   Ads.showRewarded(tx('reward_wait',label), function(){
     daily.charges[type]=(daily.charges[type]||0)+1;
