@@ -98,6 +98,10 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .go-join .go-join-t{ font-size:13px; font-weight:800; color:var(--fg); margin:0 14px 10px; line-height:1.4; }
 .modal button.go-x{ position:absolute; top:5px; right:5px; width:26px; height:26px; padding:0; border-radius:50%; background:rgba(255,255,255,.14); color:#fff; font-size:13px; line-height:26px; }
 .go-league[hidden], .go-join[hidden]{ display:none; }
+.go-boost{ display:flex; gap:8px; margin:0 0 10px; }
+.go-boost[hidden]{ display:none; }
+.go-boost button{ flex:1; font-size:16px !important; padding:14px 8px !important; }
+.go-boost button[hidden]{ display:none; }
 .ad-continue-btn{ background:linear-gradient(160deg,#4fe0a0,#18c98a) !important; color:#053323 !important; margin-bottom:10px; font-size:20px !important; padding:16px 18px !important; }
 .rankbtn{ display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:14px;
   background:rgba(0,0,0,.22); border:1.5px solid rgba(255,255,255,.15); font-size:19px; cursor:pointer; appearance:none; color:inherit; }
@@ -210,7 +214,11 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
       <div class="go-join-t" data-i18n="go_join_t">Lige katıl, bu skor haftalık sıralamaya girsin!</div>
       <button id="goJoinBtn" data-i18n="go_join_btn">Lige Katıl</button>
     </div>
-    <button id="mAdBtn" class="ad-continue-btn" data-i18n="revive" hidden>Ücretsiz Canlan</button>
+    <div class="go-boost" id="mBoost" hidden>
+      <button id="mUndoBtn">🔙</button>
+      <button id="mShufBtn">🔀</button>
+    </div>
+    <button id="mAdBtn" class="ad-continue-btn" data-i18n="revive" hidden>📺 Reklam İzle, Devam Et</button>
     <button id="mBtn">Devam Et</button>
   </div>
 </div>
@@ -267,7 +275,7 @@ var LANG=(function(){ try{ var l=localStorage.getItem('renklibloklar_lang'); if 
 var TXT={
  tr:{ rank:'Sıralama', settings:'Ayarlar', undo:'Geri Al', shuffle:'Karıştır', hint:'İpucu',
   daily_title:'🎁 Günlük Ödül!', daily_ok:'Harika!', ad_title:'Hazırlanıyor…', ad_text:'Ödülün birazdan gelecek',
-  revive:'Ücretsiz Canlan (1 hak)', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
+  revive:'📺 Reklam İzle, Devam Et', revive_free:'▶️ Ücretsiz Devam Et', stuck_title:'Yer Kalmadı!', stuck_text:'Geri Al ya da Karıştır ile devam edebilirsin.', use_undo:'🔙 Geri Al ({0})', use_shuffle:'🔀 Karıştır ({0})', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
   nick:'Rumuzun', join:'Katıl', close:'Kapat', sound:'Ses', music:'Müzik', vib:'Titreşim', restart:'🔄 Yeniden Başla', lang_btn:'🌐 English', bomb:'BOMBA',
   new_record:'Yeni Rekor! 🏆', no_moves:'Hamle Kalmadı', score_best:'Skor: {0} — En iyi: {1}', replay:'Yeniden Oyna', no_thanks:'Hayır, Teşekkürler',
   reviving:'Canlanıyor…', revive_text:'Devam etme hakkın birazdan gelecek', reward_wait:'{0} ödülün birazdan gelecek',
@@ -286,7 +294,7 @@ var TXT={
   how_3:'🔙 Geri Al, 🔀 Karıştır ve 💡 İpucu seni kurtarır. Hiçbir parça sığmayınca oyun biter.' },
  en:{ rank:'Ranking', settings:'Settings', undo:'Undo', shuffle:'Shuffle', hint:'Hint',
   daily_title:'🎁 Daily Reward!', daily_ok:'Awesome!', ad_title:'Getting ready…', ad_text:'Your reward is coming up',
-  revive:'Free Revive (1 left)', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
+  revive:'📺 Watch Ad, Continue', revive_free:'▶️ Continue for Free', stuck_title:'No Room Left!', stuck_text:'Use Undo or Shuffle to keep going.', use_undo:'🔙 Undo ({0})', use_shuffle:'🔀 Shuffle ({0})', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
   nick:'Nickname', join:'Join', close:'Close', sound:'Sound', music:'Music', vib:'Vibration', restart:'🔄 Restart', lang_btn:'🌐 Türkçe', bomb:'BOMB',
   new_record:'New Record! 🏆', no_moves:'No Moves Left', score_best:'Score: {0} — Best: {1}', replay:'Play Again', no_thanks:'No, Thanks',
   reviving:'Reviving…', revive_text:'Your revive is coming up', reward_wait:'Your {0} reward is coming up',
@@ -315,7 +323,7 @@ applyLang();
 var N=8, boardEl=document.getElementById('board'), trayEl=document.getElementById('tray');
 var levelVal=document.getElementById('levelVal'), scoreVal=document.getElementById('scoreVal'), hudScoreVal=document.getElementById('hudScoreVal');
 var goLeagueEl=document.getElementById('goLeague'), goJoinEl=document.getElementById('goJoin');
-var overlay=document.getElementById('overlay'), mTitle=document.getElementById('mTitle'), mStars=document.getElementById('mStars'), mText=document.getElementById('mText'), mBtn=document.getElementById('mBtn'), mAdBtn=document.getElementById('mAdBtn');
+var overlay=document.getElementById('overlay'), mTitle=document.getElementById('mTitle'), mStars=document.getElementById('mStars'), mText=document.getElementById('mText'), mBtn=document.getElementById('mBtn'), mAdBtn=document.getElementById('mAdBtn'), mBoost=document.getElementById('mBoost'), mUndoBtn=document.getElementById('mUndoBtn'), mShufBtn=document.getElementById('mShufBtn');
 
 // bloklar rengarenk kalıyor — skor arttıkça palet genişliyor (yeni renkler ekleniyor)
 var GEM_STAGES=[
@@ -497,6 +505,7 @@ function newGame(){
   try{ localStorage.removeItem('renklibloklar_save'); }catch(e){}
   grid=freshGrid(); score=0; over=false; recordBeaten=false; seenStage=0; boardSeenStage=0; continuedThisGame=false;
   undoSnapshot=null; resolving=false;
+  if (typeof Ads!=='undefined' && Ads) Ads.rewardedThisGame=false;
   applyBoardColor(0);
   best=loadBest();
   levelVal.textContent=best; scoreVal.textContent='0'; hudScoreVal.textContent='0';
@@ -624,33 +633,55 @@ function canPlace(shape,r0,c0){
   }
   return true;
 }
-var goStage=1, goRankInfo=null, goRankLoading=false;
+var goStage=1, goRankInfo=null, goRankLoading=false, goJingle=false;
+/* Oyun sonu üç aşamalı:
+   0) Yer kalmadı: elinde Geri Al / Karıştır hakkı varsa onları kullanma teklifi
+   1) Reklam izleyip devam etme teklifi (oyun başına 1 kez)
+   2) Sonuç kartı (skor + lig sıralaması + katıl)
+   Kayıtlı oyun ancak 2. aşamada silinir; uygulama 0/1'de kapanırsa açılınca teklif tekrar gelir. */
+function canUseUndo(){ return (daily.charges.undo>0) && !!undoSnapshot; }
+function canUseShuffle(){ return daily.charges.shuffle>0; }
 function gameOverNoMoves(){
   over=true;
-  try{ localStorage.removeItem('renklibloklar_save'); }catch(e){}
   flushScore();
-  mTitle.textContent = recordBeaten ? tx('new_record') : tx('no_moves');
-  mStars.textContent = recordBeaten ? '' : '😢';
-  mStars.className = 'stars' + (recordBeaten ? '' : ' sad');
-  if (recordBeaten) playJingle([523,659,784,1047], 0.09, 'square', 0.14);
-  else playJingle([392,349,330,262], 0.7, 'triangle', 0.14); // üzgün, alçalan ~2 sn'lik kısa melodi
-  mText.textContent=tx('score_best',score,best);
-  goStage = continuedThisGame ? 2 : 1;
+  goJingle=false;
   goRankInfo=null; goRankLoading=true;
+  goStage = (canUseUndo()||canUseShuffle()) ? 0 : (continuedThisGame ? 2 : 1);
   applyGoStage();
   overlay.hidden=false;
   if (typeof startGoRank==='function') startGoRank();
 }
-/* Oyun sonu iki aşamalı: 1) Canlan / soluk "Hayır, Teşekkürler"  2) sonuç kartı (skor + lig sıralaması + katıl) */
 function applyGoStage(){
-  var st2 = goStage===2;
-  mAdBtn.hidden = st2 || continuedThisGame;
-  mBtn.textContent = st2 ? tx('replay') : tx('no_thanks');
-  mBtn.classList.toggle('as-link', !st2);
-  mBtn.classList.toggle('faint', !st2);
-  if (!st2){ goLeagueEl.hidden=true; goJoinEl.hidden=true; return; }
+  var st=goStage;
+  mBoost.hidden = st!==0;
+  mAdBtn.hidden = st!==1;
+  mAdBtn.textContent = Ads.isNewPlayer() ? tx('revive_free') : tx('revive');
+  mBtn.textContent = st===2 ? tx('replay') : tx('no_thanks');
+  mBtn.classList.toggle('as-link', st!==2);
+  mBtn.classList.toggle('faint', st!==2);
+  if (st===0){
+    mTitle.textContent=tx('stuck_title');
+    mStars.textContent='🤔'; mStars.className='stars';
+    mText.textContent=tx('stuck_text');
+    mUndoBtn.hidden=!canUseUndo(); mUndoBtn.textContent=tx('use_undo', daily.charges.undo||0);
+    mShufBtn.hidden=!canUseShuffle(); mShufBtn.textContent=tx('use_shuffle', daily.charges.shuffle||0);
+    goLeagueEl.hidden=true; goJoinEl.hidden=true; return;
+  }
+  mTitle.textContent = recordBeaten ? tx('new_record') : tx('no_moves');
+  mStars.textContent = recordBeaten ? '' : '😢';
+  mStars.className = 'stars' + (recordBeaten ? '' : ' sad');
+  mText.textContent=tx('score_best',score,best);
+  if (!goJingle){
+    goJingle=true;
+    if (recordBeaten) playJingle([523,659,784,1047], 0.09, 'square', 0.14);
+    else playJingle([392,349,330,262], 0.7, 'triangle', 0.14); // üzgün, alçalan ~2 sn'lik kısa melodi
+  }
+  if (st===2){ try{ localStorage.removeItem('renklibloklar_save'); }catch(e){} }
+  if (st!==2){ goLeagueEl.hidden=true; goJoinEl.hidden=true; return; }
   renderGoResult();
 }
+/* 0. aşamadan bir hak kullanılınca oyun kaldığı yerden devam eder */
+function resumeFromStuck(){ over=false; overlay.hidden=true; }
 function continueAfterAd(){
   continuedThisGame=true;
   var avail=trayPieces.filter(function(p){return !p.used;});
@@ -928,12 +959,21 @@ function attachPieceDrag(el, piece, idx, mini){
     window.addEventListener('pointerup', onUp, {once:true});
   });
 }
-mBtn.addEventListener('click', function(){ if (over && goStage===1){ goStage=2; applyGoStage(); } else newGame(); });
-mAdBtn.addEventListener('click', function(){
-  /* tek seferlik ücretsiz canlanma hakkı: bekleme/reklam ekranı yok, anında devam */
-  overlay.hidden=true;
-  continueAfterAd();
+mBtn.addEventListener('click', function(){
+  if (over && goStage===0){ goStage = continuedThisGame ? 2 : 1; applyGoStage(); return; }
+  if (over && goStage===1){ goStage=2; applyGoStage(); return; }
+  /* sonuç kartından "Yeniden Oyna": kurallara uyuyorsa araya reklam, sonra yeni oyun */
+  Ads.afterGame(function(){ newGame(); });
 });
+mAdBtn.addEventListener('click', function(){
+  /* oyun başına 1 kez: ödüllü reklam izlenince devam */
+  overlay.hidden=true;
+  if (Ads.isNewPlayer()){ continueAfterAd(); return; } // ilk 3 oyunda reklamsız devam
+  Ads.showRewarded(tx('revive_text'), function(){ Ads.rewardedThisGame=true; continueAfterAd(); },
+                   function(){ overlay.hidden=false; });
+});
+mUndoBtn.addEventListener('click', function(){ if (!canUseUndo()) return; resumeFromStuck(); doUndo(); checkNoMoves(); });
+mShufBtn.addEventListener('click', function(){ if (!canUseShuffle()) return; resumeFromStuck(); doShuffle(); });
 window.addEventListener('resize', function(){ measure(); layoutBg(); renderGrid(); renderTray(); });
 var SAVE_KEY='renklibloklar_save';
 function saveGame(){
@@ -1472,14 +1512,43 @@ function refreshBoosterUI(){
   boostShuffle.classList.toggle('empty', !(daily.charges.shuffle>0) || resolving);
   boostHint.classList.toggle('empty', !(daily.charges.hint>0) || resolving);
 }
+/* ---- Reklamlar ----
+   Şimdilik gerçek reklam YOK: ödüllü reklamın yerinde kısa bir bekleme ekranı var, araya giren reklam hiçbir şey göstermez.
+   Capacitor + AdMob bağlanınca yalnızca Ads.realRewarded / Ads.realInterstitial doldurulacak, oyunun geri kalanı değişmeyecek.
+   Yeni oyuncu (ilk 3 oyun): araya giren reklam yok, devam hakkı reklamsız.
+   Araya giren reklam kuralları: ilk 3 oyunda yok, 2 oyunda bir, son reklamdan en az 90 sn sonra,
+   o oyunda zaten ödüllü reklam izlendiyse yok. */
+var Ads={
+  rewardedThisGame:false,
+  FREE_GAMES:3, // yeni oyuncu: ilk 3 oyunda araya giren reklam yok, devam hakkı reklamsız
+  isNewPlayer:function(){ return (this.st.games||0) < this.FREE_GAMES; },
+  st:(function(){ try{ return JSON.parse(localStorage.getItem('renklibloklar_ads'))||{}; }catch(e){ return {}; } })(),
+  save:function(){ try{ localStorage.setItem('renklibloklar_ads', JSON.stringify(this.st)); }catch(e){} },
+  realRewarded:null,      // function(onReward, onFail) — AdMob bağlanınca
+  realInterstitial:null,  // function(onDone) — AdMob bağlanınca
+  showRewarded:function(text, onReward, onFail){
+    var self=this;
+    function ok(){ self.st.last=Date.now(); self.save(); onReward(); }
+    if (self.realRewarded){ self.realRewarded(ok, onFail||function(){}); return; }
+    adTitle.textContent=tx('ad_title'); adText.textContent=text;
+    adOverlay.hidden=false;
+    setTimeout(function(){ adOverlay.hidden=true; ok(); }, 1800);
+  },
+  afterGame:function(next){
+    var s=this.st, now=Date.now();
+    s.games=(s.games||0)+1;
+    var show = s.games>this.FREE_GAMES && (s.games%2===0) && (now-(s.last||0)>90000) && !this.rewardedThisGame;
+    this.rewardedThisGame=false;
+    this.save();
+    if (show && this.realInterstitial){ s.last=now; this.save(); this.realInterstitial(next); return; }
+    next();
+  }
+};
 function watchAdFor(type, label){
-  adTitle.textContent=tx('ad_title'); adText.textContent=tx('reward_wait',label);
-  adOverlay.hidden=false;
-  setTimeout(function(){
-    adOverlay.hidden=true;
+  Ads.showRewarded(tx('reward_wait',label), function(){
     daily.charges[type]=(daily.charges[type]||0)+1;
     saveDaily(); refreshBoosterUI();
-  }, 1800);
+  });
 }
 function doHint(){
   var avail=trayPieces.filter(function(p){return !p.used;});
@@ -1501,20 +1570,26 @@ function doHint(){
 boostUndo.addEventListener('click', function(){
   if (resolving) return;
   if (!(daily.charges.undo>0)){ watchAdFor('undo','🔙 '+tx('undo')); return; }
+  doUndo();
+});
+function doUndo(){
   if (!undoSnapshot) return;
   daily.charges.undo--; saveDaily();
   grid=undoSnapshot.grid; score=undoSnapshot.score; trayPieces=undoSnapshot.trayPieces;
   undoSnapshot=null;
   renderGrid(); renderTray(); scoreVal.textContent=score; hudScoreVal.textContent=score;
   refreshBoosterUI();
-});
+}
 boostShuffle.addEventListener('click', function(){
   if (resolving) return;
   if (!(daily.charges.shuffle>0)){ watchAdFor('shuffle','🔀 '+tx('shuffle')); return; }
+  doShuffle();
+});
+function doShuffle(){
   daily.charges.shuffle--; saveDaily();
   fillTray();
   refreshBoosterUI();
-});
+}
 boostHint.addEventListener('click', function(){
   if (resolving) return;
   if (!(daily.charges.hint>0)){ watchAdFor('hint','💡 '+tx('hint')); return; }
