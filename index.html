@@ -1569,12 +1569,25 @@ var Ads={
     next();
   }
 };
+var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
+var BUILD='b6';
+/* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
+(function(){ try{
+  fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
+    var m=t.match(/var BUILD='([^']+)'/);
+    if (m && m[1]!==BUILD && location.search.indexOf('v='+m[1])<0){
+      if (bootCounted){ Ads.st.games=Math.max(0,(Ads.st.games||1)-1); Ads.save(); }
+      try{ if (typeof saveGame==='function') saveGame(); }catch(e){}
+      location.replace(location.pathname+'?v='+m[1]);
+    }
+  }).catch(function(){});
+}catch(e){} })();
 /* GEÇİCİ TANI ETİKETİ: sol altta küçük yazı. b5=sürüm, g=oyun sayacı, N/W=uygulama/web, R/I=gerçek ödüllü/araya giren reklam bağlı, son hak yolu */
 (function(){ var d=document.createElement('div'); d.style.cssText='position:fixed;left:6px;bottom:3px;font:9px monospace;color:#fff;opacity:.5;z-index:98;pointer-events:none';
   document.body.appendChild(d);
   function upd(){ var C=window.Capacitor, nat=!!(C&&C.isNativePlatform&&C.isNativePlatform());
-    d.textContent='b5 g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||''); }
+    d.textContent=BUILD+' g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||'')+' r:'+(Ads.eR||'')+' i:'+(Ads.eI||''); }
   upd(); setInterval(upd,1000); })();
 /* ---- Gerçek AdMob (yalnızca Capacitor Android uygulamasında; web ve eski Median uygulamasında bu blok çalışmaz) ----
    Ödüllü reklam hazır değilse en fazla 5 sn beklenir; yine gelmezse oyuncu cezalandırılmaz, ödül verilir.
@@ -1585,9 +1598,9 @@ if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
   var IDS={ rew:'ca-app-pub-8950876657640160/3904601232', inter:'ca-app-pub-8950876657640160/1795498554' };
   var rewReady=false, rewLoading=false, intReady=false, intLoading=false, earned=false, started=false;
   function prepRew(){ if (!started || rewReady || rewLoading) return; rewLoading=true;
-    AM.prepareRewardVideoAd({adId:IDS.rew}).then(function(){ rewReady=true; }).catch(function(){}).then(function(){ rewLoading=false; }); }
+    AM.prepareRewardVideoAd({adId:IDS.rew}).then(function(){ rewReady=true; Ads.eR='ok'; }).catch(function(e){ Ads.eR=String((e&&(e.code||e.message))||'x').slice(0,28); }).then(function(){ rewLoading=false; }); }
   function prepInt(){ if (!started || intReady || intLoading) return; intLoading=true;
-    AM.prepareInterstitial({adId:IDS.inter}).then(function(){ intReady=true; }).catch(function(){}).then(function(){ intLoading=false; }); }
+    AM.prepareInterstitial({adId:IDS.inter}).then(function(){ intReady=true; Ads.eI='ok'; }).catch(function(e){ Ads.eI=String((e&&(e.code||e.message))||'x').slice(0,28); }).then(function(){ intLoading=false; }); }
   AM.initialize({}).then(function(){
     return AM.requestConsentInfo().then(function(ci){
       if (ci && ci.isConsentFormAvailable && ci.status==='REQUIRED') return AM.showConsentForm();
@@ -1599,9 +1612,14 @@ if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
     return function(){ if (done) return false; done=true; if (h && h.remove) h.remove(); return true; }; }
   Ads.realRewarded=function(ok, fail){
     function show(){
-      earned=false; rewReady=false;
+      earned=false; rewReady=false; Ads.via='show';
+      var shown=false;
       var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){ if (earned){ Ads.via='ad'; ok(); } else fail(); prepRew(); }, 80); });
+      AM.addListener('onRewardedVideoAdShowed', function(){ shown=true; });
+      AM.addListener('onRewardedVideoAdFailedToShow', function(){ if (cancel()){ Ads.via='fts'; ok(); prepRew(); } });
       AM.showRewardVideoAd().then(function(){ earned=true; }).catch(function(){ if (cancel()){ Ads.via='err'; ok(); prepRew(); } });
+      // güvenlik: reklam 4 sn içinde ekrana gelmediyse oyuncuyu bekletme, hakkı ver
+      setTimeout(function(){ if (!shown && !earned && cancel()){ Ads.via='hang'; ok(); prepRew(); } }, 4000);
     }
     if (rewReady){ show(); return; }
     adTitle.textContent=tx('ad_title'); adText.textContent=''; adOverlay.hidden=false; prepRew();
@@ -1615,8 +1633,12 @@ if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
   Ads.realInterstitial=function(next){
     if (!intReady){ prepInt(); next(); return; }
     intReady=false;
+    var shownI=false;
     var cancel=once('interstitialAdDismissed', function(){ prepInt(); next(); });
+    AM.addListener('interstitialAdShowed', function(){ shownI=true; });
+    AM.addListener('interstitialAdFailedToShow', function(){ if (cancel()){ prepInt(); next(); } });
     AM.showInterstitial().catch(function(){ if (cancel()){ prepInt(); next(); } });
+    setTimeout(function(){ if (!shownI && cancel()){ prepInt(); next(); } }, 4000); // ekrana gelmediyse oyunu bekletme
   };
 })();
 var toastEl=null, toastT=0;
@@ -1627,13 +1649,10 @@ function toast(msg){
 }
 function watchAdFor(type, label){
   Ads.showRewarded(tx('reward_wait',label), function(){
-    toast(label+' ✓ ('+(Ads.via||'?')+')');
+    toast(label+' +1');
     daily.charges[type]=(daily.charges[type]||0)+1;
     saveDaily(); refreshBoosterUI();
-    // reklamdan sonra hak hemen kullanılsın (ayrıca tekrar dokunmaya gerek kalmasın)
-    var btn={undo:boostUndo, shuffle:boostShuffle, hint:boostHint}[type];
-    if (btn) setTimeout(function(){ btn.click(); }, 200);
-  }, function(){ toast('Reklam tamamlanmadı ('+(Ads.via||'?')+')'); });
+  }, function(){ toast(LANG==='tr' ? 'Reklam tamamlanmadı' : 'Ad not completed'); });
 }
 function doHint(){
   var avail=trayPieces.filter(function(p){return !p.used;});
