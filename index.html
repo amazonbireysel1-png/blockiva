@@ -104,6 +104,7 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .go-boost button{ flex:1; font-size:16px !important; padding:14px 8px !important; }
 .go-boost button[hidden]{ display:none; }
 .ad-continue-btn{ background:linear-gradient(160deg,#4fe0a0,#18c98a) !important; color:#053323 !important; margin-bottom:10px; font-size:20px !important; padding:16px 18px !important; }
+.toast{ position:fixed; left:50%; bottom:130px; transform:translateX(-50%); max-width:86%; background:rgba(10,14,40,.95); color:#fff; padding:10px 16px; border-radius:14px; font-weight:800; font-size:15px; text-align:center; z-index:99; pointer-events:none; box-shadow:0 6px 18px rgba(0,0,0,.45); border:1.5px solid rgba(79,224,160,.6); }
 .play-ic{ width:1.25em; height:1.25em; margin-right:8px; flex:none; display:block; }
 .ad-continue-btn, .go-boost button{ display:flex; align-items:center; justify-content:center; }
 .boost-btn .cnt.ad{ min-width:20px; height:20px; padding:0; background:linear-gradient(160deg,#4fe0a0,#18c98a); box-shadow:0 1px 4px rgba(0,0,0,.35); }
@@ -1553,7 +1554,7 @@ var Ads={
     function ok(){ self.st.last=Date.now(); self.save(); onReward(); }
     if (self.realRewarded){ self.realRewarded(ok, onFail||function(){}); return; }
     adTitle.textContent=tx('ad_title'); adText.textContent=text;
-    adOverlay.hidden=false;
+    adOverlay.hidden=false; self.via='fake';
     setTimeout(function(){ adOverlay.hidden=true; ok(); }, 1800);
   },
   afterGame:function(next){
@@ -1590,15 +1591,15 @@ var Ads={
   Ads.realRewarded=function(ok, fail){
     function show(){
       earned=false; rewReady=false;
-      var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){ if (earned) ok(); else fail(); prepRew(); }, 80); });
-      AM.showRewardVideoAd().then(function(){ earned=true; }).catch(function(){ if (cancel()){ ok(); prepRew(); } });
+      var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){ if (earned){ Ads.via='ad'; ok(); } else fail(); prepRew(); }, 80); });
+      AM.showRewardVideoAd().then(function(){ earned=true; }).catch(function(){ if (cancel()){ Ads.via='err'; ok(); prepRew(); } });
     }
     if (rewReady){ show(); return; }
     adTitle.textContent=tx('ad_title'); adText.textContent=''; adOverlay.hidden=false; prepRew();
     var t0=Date.now();
     (function wait(){
       if (rewReady){ adOverlay.hidden=true; show(); }
-      else if (Date.now()-t0>5000){ adOverlay.hidden=true; ok(); prepRew(); }
+      else if (Date.now()-t0>5000){ adOverlay.hidden=true; Ads.via='noad'; ok(); prepRew(); }
       else setTimeout(wait, 250);
     })();
   };
@@ -1609,14 +1610,21 @@ var Ads={
     AM.showInterstitial().catch(function(){ if (cancel()){ prepInt(); next(); } });
   };
 })();
+var toastEl=null, toastT=0;
+function toast(msg){
+  if (!toastEl){ toastEl=document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+  toastEl.textContent=msg; toastEl.hidden=false; clearTimeout(toastT);
+  toastT=setTimeout(function(){ toastEl.hidden=true; }, 2600);
+}
 function watchAdFor(type, label){
   Ads.showRewarded(tx('reward_wait',label), function(){
+    toast(label+' ✓ ('+(Ads.via||'?')+')');
     daily.charges[type]=(daily.charges[type]||0)+1;
     saveDaily(); refreshBoosterUI();
     // reklamdan sonra hak hemen kullanılsın (ayrıca tekrar dokunmaya gerek kalmasın)
     var btn={undo:boostUndo, shuffle:boostShuffle, hint:boostHint}[type];
     if (btn) setTimeout(function(){ btn.click(); }, 200);
-  });
+  }, function(){ toast('Reklam tamamlanmadı ('+(Ads.via||'?')+')'); });
 }
 function doHint(){
   var avail=trayPieces.filter(function(p){return !p.used;});
@@ -1626,14 +1634,14 @@ function doHint(){
       if (canPlace(avail[i].shape,r,c)){ spot={r0:r,c0:c}; spotPiece=avail[i]; }
     }
   }
-  if (!spot) return;
+  if (!spot){ toast('💡 ' + (tx('hint')) + ': —'); return; }
   spotPiece.shape.forEach(function(p){
     var bg=document.getElementById('bg-'+(spot.r0+p[0])+'-'+(spot.c0+p[1]));
     if (bg) bg.classList.add('hint');
   });
   setTimeout(function(){
     boardEl.querySelectorAll('.bgcell.hint').forEach(function(e){ e.classList.remove('hint'); });
-  }, 1800);
+  }, 3200);
 }
 boostUndo.addEventListener('click', function(){
   if (resolving) return;
