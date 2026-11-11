@@ -1571,7 +1571,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b6';
+var BUILD='b7';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
@@ -1613,9 +1613,14 @@ var BUILD='b6';
   Ads.realRewarded=function(ok, fail){
     function show(){
       earned=false; rewReady=false; Ads.via='show';
-      var shown=false;
-      var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){ if (earned){ Ads.via='ad'; ok(); } else fail(); prepRew(); }, 80); });
-      AM.addListener('onRewardedVideoAdShowed', function(){ shown=true; });
+      var shown=false, tShow=Date.now();
+      // reklam 6 sn'den kısa sürede ödülsüz kapandıysa oyuncu atlamış olamaz (reklam bozuk/boş açılmış): hak yine verilir
+      var cancel=once('onRewardedVideoAdDismissed', function(){ setTimeout(function(){
+        if (earned){ Ads.via='ad'; ok(); }
+        else if (Date.now()-tShow<6000){ Ads.via='quick'; ok(); }
+        else { Ads.via='skip'; fail(); }
+        prepRew(); }, 400); });
+      AM.addListener('onRewardedVideoAdShowed', function(){ shown=true; tShow=Date.now(); Ads.via='shown'; });
       AM.addListener('onRewardedVideoAdFailedToShow', function(){ if (cancel()){ Ads.via='fts'; ok(); prepRew(); } });
       AM.showRewardVideoAd().then(function(){ earned=true; }).catch(function(){ if (cancel()){ Ads.via='err'; ok(); prepRew(); } });
       // güvenlik: reklam 4 sn içinde ekrana gelmediyse oyuncuyu bekletme, hakkı ver
