@@ -104,6 +104,10 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .go-boost button{ flex:1; font-size:16px !important; padding:14px 8px !important; }
 .go-boost button[hidden]{ display:none; }
 .ad-continue-btn{ background:linear-gradient(160deg,#4fe0a0,#18c98a) !important; color:#053323 !important; margin-bottom:10px; font-size:20px !important; padding:16px 18px !important; }
+.play-ic{ width:1.25em; height:1.25em; margin-right:8px; flex:none; display:block; }
+.ad-continue-btn, .go-boost button{ display:flex; align-items:center; justify-content:center; }
+.boost-btn .cnt.ad{ min-width:20px; height:20px; padding:0; background:linear-gradient(160deg,#4fe0a0,#18c98a); box-shadow:0 1px 4px rgba(0,0,0,.35); }
+.boost-btn .cnt.ad svg{ width:10px; height:10px; display:block; margin-left:1px; }
 .rankbtn{ display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:14px;
   background:rgba(0,0,0,.22); border:1.5px solid rgba(255,255,255,.15); font-size:19px; cursor:pointer; appearance:none; color:inherit; }
 .rank-modal{ max-width:340px; text-align:left; max-height:80vh; display:flex; flex-direction:column; }
@@ -152,7 +156,7 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .boost-btn{ position:relative; width:52px; height:52px; border-radius:16px; background:rgba(0,0,0,.22);
   border:1.5px solid rgba(255,255,255,.15); font-size:22px; display:flex; align-items:center; justify-content:center;
   cursor:pointer; appearance:none; color:inherit; }
-.boost-btn.empty{ opacity:.55; }
+.boost-btn.empty{ opacity:.72; }
 .boost-btn .cnt{ position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; padding:0 4px; border-radius:9px;
   background:var(--accent); color:#3a2400; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:11px;
   display:flex; align-items:center; justify-content:center; }
@@ -218,7 +222,7 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
     <div class="go-boost" id="mBoost" hidden>
       <button id="mShufBtn">🔀</button>
     </div>
-    <button id="mAdBtn" class="ad-continue-btn" data-i18n="revive" hidden>📺 Reklam İzle, Devam Et</button>
+    <button id="mAdBtn" class="ad-continue-btn" hidden>Devam Et</button>
     <button id="mBtn">Devam Et</button>
   </div>
 </div>
@@ -275,7 +279,7 @@ var LANG=(function(){ try{ var l=localStorage.getItem('renklibloklar_lang'); if 
 var TXT={
  tr:{ rank:'Sıralama', settings:'Ayarlar', undo:'Geri Al', shuffle:'Karıştır', hint:'İpucu',
   daily_title:'🎁 Günlük Ödül!', daily_ok:'Harika!', ad_title:'Hazırlanıyor…', ad_text:'Ödülün birazdan gelecek',
-  revive:'📺 Reklam İzle, Devam Et', revive_free:'▶️ Ücretsiz Devam Et', stuck_title:'Yer Kalmadı!', stuck_text:'Karıştır ile yeni parçalar al, oyuna devam et!', use_shuffle:'🔀 Karıştır ({0})', shuffle_ad:'📺 Reklam İzle, Karıştır', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
+  revive:'Devam Et', revive_free:'▶️ Ücretsiz Devam Et', stuck_title:'Yer Kalmadı!', stuck_text:'Karıştır ile yeni parçalar al, oyuna devam et!', use_shuffle:'🔀 Karıştır ({0})', shuffle_ad:'Karıştır', lg_title:'🏆 Lig', tab_league:'🏅 Lig', tab_global:'🌍 Global', loading:'Yükleniyor…',
   nick:'Rumuzun', join:'Katıl', close:'Kapat', sound:'Ses', music:'Müzik', vib:'Titreşim', restart:'🔄 Yeniden Başla', lang_btn:'🌐 English', bomb:'BOMBA',
   new_record:'Yeni Rekor! 🏆', no_moves:'Hamle Kalmadı', score_best:'Skor: {0} — En iyi: {1}', replay:'Yeniden Oyna', no_thanks:'Hayır, Teşekkürler',
   reviving:'Canlanıyor…', revive_text:'Devam etme hakkın birazdan gelecek', reward_wait:'{0} ödülün birazdan gelecek',
@@ -294,7 +298,7 @@ var TXT={
   how_3:'🔙 Geri Al, 🔀 Karıştır ve 💡 İpucu seni kurtarır. Hiçbir parça sığmayınca oyun biter.' },
  en:{ rank:'Ranking', settings:'Settings', undo:'Undo', shuffle:'Shuffle', hint:'Hint',
   daily_title:'🎁 Daily Reward!', daily_ok:'Awesome!', ad_title:'Getting ready…', ad_text:'Your reward is coming up',
-  revive:'📺 Watch Ad, Continue', revive_free:'▶️ Continue for Free', stuck_title:'No Room Left!', stuck_text:'Shuffle for new pieces and keep playing!', use_shuffle:'🔀 Shuffle ({0})', shuffle_ad:'📺 Watch Ad, Shuffle', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
+  revive:'Continue', revive_free:'▶️ Continue for Free', stuck_title:'No Room Left!', stuck_text:'Shuffle for new pieces and keep playing!', use_shuffle:'🔀 Shuffle ({0})', shuffle_ad:'Shuffle', lg_title:'🏆 League', tab_league:'🏅 League', tab_global:'🌍 Global', loading:'Loading…',
   nick:'Nickname', join:'Join', close:'Close', sound:'Sound', music:'Music', vib:'Vibration', restart:'🔄 Restart', lang_btn:'🌐 Türkçe', bomb:'BOMB',
   new_record:'New Record! 🏆', no_moves:'No Moves Left', score_best:'Score: {0} — Best: {1}', replay:'Play Again', no_thanks:'No, Thanks',
   reviving:'Reviving…', revive_text:'Your revive is coming up', reward_wait:'Your {0} reward is coming up',
@@ -653,11 +657,13 @@ function gameOverNoMoves(){
   overlay.hidden=false;
   if (typeof startGoRank==='function') startGoRank();
 }
+var PLAY_SVG='<svg class="play-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#053323"/><path d="M9.3 7v10l8-5z" fill="#4fe0a0"/></svg>';
+function adBtnHTML(label){ return PLAY_SVG+'<span>'+label+'</span>'; }
 function applyGoStage(){
   var st=goStage;
   mBoost.hidden = st!==0;
   mAdBtn.hidden = st!==1;
-  mAdBtn.textContent = Ads.isNewPlayer() ? tx('revive_free') : tx('revive');
+  if (Ads.isNewPlayer()) mAdBtn.textContent = tx('revive_free'); else mAdBtn.innerHTML = adBtnHTML(tx('revive'));
   mBtn.textContent = st===2 ? tx('replay') : tx('no_thanks');
   mBtn.classList.toggle('as-link', st!==2);
   mBtn.classList.toggle('faint', st!==2);
@@ -665,7 +671,7 @@ function applyGoStage(){
     mTitle.textContent=tx('stuck_title');
     mStars.textContent='🤔'; mStars.className='stars';
     mText.textContent=tx('stuck_text');
-    mShufBtn.textContent = canUseShuffle() ? tx('use_shuffle', daily.charges.shuffle) : tx('shuffle_ad');
+    if (canUseShuffle()) mShufBtn.textContent = tx('use_shuffle', daily.charges.shuffle); else mShufBtn.innerHTML = adBtnHTML(tx('shuffle_ad'));
     mShufBtn.classList.toggle('ad-continue-btn', !canUseShuffle());
     goLeagueEl.hidden=true; goJoinEl.hidden=true; return;
   }
@@ -1515,10 +1521,15 @@ function checkDailyReward(){
   dailyRewardText.textContent='+'+reward.undo+' 🔙 '+tx('undo')+'   +'+reward.shuffle+' 🔀 '+tx('shuffle')+'   +'+reward.hint+' 💡 '+tx('hint');
   dailyOverlay.hidden=false;
 }
+function setCnt(el, n){
+  // hak bitince sayı yerine küçük yeşil ▶ rozeti: dokununca reklamla hak kazanılır
+  if (n>0){ el.className='cnt'; el.textContent=n; }
+  else { el.className='cnt ad'; el.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v18l16-9z" fill="#053323"/></svg>'; }
+}
 function refreshBoosterUI(){
-  cntUndo.textContent=daily.charges.undo||0;
-  cntShuffle.textContent=daily.charges.shuffle||0;
-  cntHint.textContent=daily.charges.hint||0;
+  setCnt(cntUndo, daily.charges.undo||0);
+  setCnt(cntShuffle, daily.charges.shuffle||0);
+  setCnt(cntHint, daily.charges.hint||0);
   boostUndo.classList.toggle('empty', !(daily.charges.undo>0) || !undoSnapshot || resolving);
   boostShuffle.classList.toggle('empty', !(daily.charges.shuffle>0) || resolving);
   boostHint.classList.toggle('empty', !(daily.charges.hint>0) || resolving);
