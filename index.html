@@ -1613,6 +1613,9 @@ function watchAdFor(type, label){
   Ads.showRewarded(tx('reward_wait',label), function(){
     daily.charges[type]=(daily.charges[type]||0)+1;
     saveDaily(); refreshBoosterUI();
+    // reklamdan sonra hak hemen kullanılsın (ayrıca tekrar dokunmaya gerek kalmasın)
+    var btn={undo:boostUndo, shuffle:boostShuffle, hint:boostHint}[type];
+    if (btn) setTimeout(function(){ btn.click(); }, 200);
   });
 }
 function doHint(){
