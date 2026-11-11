@@ -1538,7 +1538,7 @@ function refreshBoosterUI(){
    Şimdilik gerçek reklam YOK: ödüllü reklamın yerinde kısa bir bekleme ekranı var, araya giren reklam hiçbir şey göstermez.
    Capacitor + AdMob bağlanınca yalnızca Ads.realRewarded / Ads.realInterstitial doldurulacak, oyunun geri kalanı değişmeyecek.
    Yeni oyuncu (ilk 3 oyun): araya giren reklam yok, devam hakkı reklamsız.
-   Araya giren reklam kuralları: ilk 3 oyunda yok, 2 oyunda bir, son reklamdan en az 90 sn sonra,
+   Araya giren reklam kuralları: ilk 3 oyunda yok, sonra 3 oyunda bir (4., 7., 10. oyun), son reklamdan en az 90 sn sonra,
    o oyunda zaten ödüllü reklam izlendiyse yok. */
 var Ads={
   rewardedThisGame:false,
@@ -1559,7 +1559,7 @@ var Ads={
   afterGame:function(next){
     var s=this.st, now=Date.now();
     s.games=(s.games||0)+1;
-    var show = s.games>this.FREE_GAMES && (s.games%2===0) && (now-(s.last||0)>90000) && !this.rewardedThisGame;
+    var show = s.games>this.FREE_GAMES && ((s.games-this.FREE_GAMES-1)%3===0) && (now-(s.last||0)>90000) && !this.rewardedThisGame;
     this.rewardedThisGame=false;
     this.save();
     if (show && this.realInterstitial){ s.last=now; this.save(); this.realInterstitial(next); return; }
