@@ -1570,6 +1570,12 @@ var Ads={
   }
 };
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
+/* GEÇİCİ TANI ETİKETİ: sol altta küçük yazı. b5=sürüm, g=oyun sayacı, N/W=uygulama/web, R/I=gerçek ödüllü/araya giren reklam bağlı, son hak yolu */
+(function(){ var d=document.createElement('div'); d.style.cssText='position:fixed;left:6px;bottom:3px;font:9px monospace;color:#fff;opacity:.5;z-index:98;pointer-events:none';
+  document.body.appendChild(d);
+  function upd(){ var C=window.Capacitor, nat=!!(C&&C.isNativePlatform&&C.isNativePlatform());
+    d.textContent='b5 g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||''); }
+  upd(); setInterval(upd,1000); })();
 /* ---- Gerçek AdMob (yalnızca Capacitor Android uygulamasında; web ve eski Median uygulamasında bu blok çalışmaz) ----
    Ödüllü reklam hazır değilse en fazla 5 sn beklenir; yine gelmezse oyuncu cezalandırılmaz, ödül verilir.
    Araya giren reklam hazır değilse hiç gösterilmez. AB kullanıcıları için Google onay (UMP) formu gösterilir. */
