@@ -498,12 +498,12 @@ function pickWeightedShape(s){
   // eskiden 8000'de tam zora ulaşıyordu) — oyun ilk başlarda uzun süre akıcı/hızlı hissettirsin.
   // üstüne üstlük eğriyi (^1.4) büktük: başlarda t çok daha yavaş yükseliyor, yani oyunun İLK bölümü
   // eskisinden de kolay kalıyor, zorluk ancak oyunun sonlarına doğru asıl hızlanıyor.
-  var t=Math.pow(Math.min(1, score/40000), 1.7); // 0 = oyun başı (çok kolay), 1 = ileri seviye (zor) — "hala çok zor" geri bildirimi üzerine eğri ciddi uzatıldı
+  var t=Math.pow(Math.min(1, score/36000), 1.7); // 0 = oyun başı (çok kolay), 1 = ileri seviye (zor) — "hala çok zor" geri bildirimi üzerine eğri ciddi uzatıldı
   // not: "small" kategorisinde çok az şekil var (tekli/ikili), eskiden ağırlığı çok yüksekti (%52) —
   // bu da "hep aynı şekil geliyor" hissi veriyordu. Dengelendi ama kolaylık için yine de small/tromino ağırlıklı.
   var w={ small:42-10*t, tromino:36-6*t, tetromino:16+9*t, penta:4+4*t, big:1+2*t };
   // oyunun en başında (skor 3500 altı) büyük/zor parçalar hiç gelmesin — tamamen küçük/basit parçalarla başlasın
-  if (score<3500){ w.penta=0; w.big=0; }
+  if (score<3000){ w.penta=0; w.big=0; }
   var total=0; for (var k in w) total+=w[k];
   var r=Math.random()*total, cat=null;
   for (var k2 in w){ if (r<w[k2]){ cat=k2; break; } r-=w[k2]; }
@@ -514,7 +514,7 @@ function guaranteedSlotCount(s){
   // "hala çok zor, ilerleyemiyorum" geri bildirimi üzerine: tepsideki 3 parçanın HEPSİ artık
   // çok daha uzun süre (35000 puana kadar) ayrı ayrı yerleştirilebilir garantili geliyor —
   // tahtanın kilitlenip oyunun aniden bitmesi ihtimali büyük ölçüde azaltıldı.
-  if ((s||0)<35000) return 3;
+  if ((s||0)<30000) return 3;
   return 2;
 }
 
@@ -1590,7 +1590,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b12';
+var BUILD='b13';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
