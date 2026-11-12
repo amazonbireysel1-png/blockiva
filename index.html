@@ -656,7 +656,7 @@ function gameOverNoMoves(){
   flushScore();
   goJingle=false;
   goRankInfo=null; goRankLoading=true;
-  goStage = (canUseShuffle()||canAdShuffle()) ? 0 : (continuedThisGame ? 2 : 1);
+  goStage = (canUseShuffle()||canAdShuffle()||!continuedThisGame) ? 0 : 2; // tek teklif ekranı: Karıştır + Devam Et birlikte
   applyGoStage();
   overlay.hidden=false;
   if (typeof startGoRank==='function') startGoRank();
@@ -665,8 +665,9 @@ var PLAY_SVG='<svg class="play-ic" viewBox="0 0 24 24" aria-hidden="true"><circl
 function adBtnHTML(label){ return PLAY_SVG+'<span>'+label+'</span>'; }
 function applyGoStage(){
   var st=goStage;
-  mBoost.hidden = st!==0;
-  mAdBtn.hidden = st!==1;
+  var shufAvail = canUseShuffle()||canAdShuffle();
+  mBoost.hidden = !(st===0 && shufAvail);
+  mAdBtn.hidden = !(st===0 && !continuedThisGame);
   if (Ads.isNewPlayer()) mAdBtn.textContent = tx('revive_free'); else mAdBtn.innerHTML = adBtnHTML(tx('revive'));
   mBtn.textContent = st===2 ? tx('replay') : tx('no_thanks');
   mBtn.classList.toggle('as-link', st!==2);
@@ -675,6 +676,7 @@ function applyGoStage(){
     mTitle.textContent=tx('stuck_title');
     mStars.textContent='🤔'; mStars.className='stars';
     mText.textContent=tx('stuck_text');
+    if (!shufAvail) { /* yalnızca Devam Et teklifi */ }
     if (canUseShuffle()) mShufBtn.textContent = tx('use_shuffle', daily.charges.shuffle); else mShufBtn.innerHTML = adBtnHTML(tx('shuffle_ad'));
     mShufBtn.classList.toggle('ad-continue-btn', !canUseShuffle());
     goLeagueEl.hidden=true; goJoinEl.hidden=true; return;
@@ -972,8 +974,7 @@ function attachPieceDrag(el, piece, idx, mini){
   });
 }
 mBtn.addEventListener('click', function(){
-  if (over && goStage===0){ goStage = continuedThisGame ? 2 : 1; applyGoStage(); return; }
-  if (over && goStage===1){ goStage=2; applyGoStage(); return; }
+  if (over && goStage<2){ goStage=2; applyGoStage(); return; }
   /* sonuç kartından "Yeniden Oyna": kurallara uyuyorsa araya reklam, sonra yeni oyun */
   Ads.afterGame(function(){ newGame(); });
 });
@@ -1572,7 +1573,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b10';
+var BUILD='b11';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
