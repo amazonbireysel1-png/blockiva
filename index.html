@@ -169,7 +169,24 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .ad-spinner{ width:44px; height:44px; border-radius:50%; border:4px solid rgba(255,255,255,.2); border-top-color:var(--accent);
   margin:0 auto 14px; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* açılış ekranı */
+#splash{ position:fixed; inset:0; z-index:200; background:radial-gradient(120% 90% at 50% 38%,#2a2f55 0%,#1b1d2a 62%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; transition:opacity .35s ease; }
+#splash.out{ opacity:0; pointer-events:none; }
+#splash svg{ width:132px; height:132px; filter:drop-shadow(0 10px 26px rgba(0,0,0,.45)); animation:spPop .7s cubic-bezier(.2,.9,.3,1.2) both; }
+#splash .spname{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; letter-spacing:.5px; color:#fff; margin-top:-4px; }
+#splash .spbar{ width:min(58vw,240px); height:8px; border-radius:8px; background:rgba(255,255,255,.14); overflow:hidden; }
+#splash .spfill{ height:100%; width:0; border-radius:8px; background:linear-gradient(90deg,#4fe0a0,#ffd166); animation:spFill 1.4s cubic-bezier(.35,.1,.25,1) forwards; }
+@keyframes spFill{ to{ width:100%; } }
+@keyframes spPop{ from{ transform:scale(.6); opacity:0; } to{ transform:scale(1); opacity:1; } }
 </style>
+<div id="splash"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="6" width="108" height="108" rx="26" fill="#232d63"/><rect x="18" y="18" width="40" height="40" rx="9" fill="#1fa7ff"/><rect x="62" y="18" width="40" height="40" rx="9" fill="#ffd166"/><rect x="18" y="62" width="40" height="40" rx="9" fill="#ff3b5c"/><rect x="62" y="62" width="40" height="40" rx="9" fill="#18c98a"/></svg><div class="spname">Blockiva</div><div class="spbar"><div class="spfill"></div></div></div>
+<script>(function(){ var t0=Date.now(), sp=document.getElementById('splash'), loaded=false, gone=false;
+  function hide(){ if (gone) return; gone=true; sp.classList.add('out'); setTimeout(function(){ if (sp.parentNode) sp.parentNode.removeChild(sp); }, 450); }
+  function check(){ if (!loaded) return; var w=1400-(Date.now()-t0); if (w>0) setTimeout(hide,w); else hide(); }
+  window.addEventListener('load', function(){ loaded=true; check(); });
+  setTimeout(function(){ loaded=true; check(); }, 4000); /* güvenlik: sayfa geç yüklense bile açılış ekranı takılı kalmaz */
+})();</script>
 <div class="app">
   <div class="top">
     <div class="levelchip"><span class="ico">👑</span><div class="v" id="levelVal">1</div></div>
@@ -1573,7 +1590,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b11';
+var BUILD='b12';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
@@ -1585,12 +1602,6 @@ var BUILD='b11';
     }
   }).catch(function(){});
 }catch(e){} })();
-/* GEÇİCİ TANI ETİKETİ (b7): sol altta küçük yazı. b5=sürüm, g=oyun sayacı, N/W=uygulama/web, R/I=gerçek ödüllü/araya giren reklam bağlı, son hak yolu */
-(function(){ var d=document.createElement('div'); d.style.cssText='position:fixed;left:6px;bottom:3px;font:9px monospace;color:#fff;opacity:.5;z-index:98;pointer-events:none';
-  document.body.appendChild(d);
-  function upd(){ var C=window.Capacitor, nat=!!(C&&C.isNativePlatform&&C.isNativePlatform());
-    d.textContent=BUILD+' g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||'')+' r:'+(Ads.eR||'')+' i:'+(Ads.eI||'')+' e:'+(Ads.ev||'')+(Ads.eR2?' '+Ads.eR2:''); }
-  upd(); setInterval(upd,1000); })();
 /* ---- Gerçek AdMob (yalnızca Capacitor Android uygulamasında; web ve eski Median uygulamasında bu blok çalışmaz) ----
    Ödüllü reklam hazır değilse en fazla 5 sn beklenir; yine gelmezse oyuncu cezalandırılmaz, ödül verilir.
    Araya giren reklam hazır değilse hiç gösterilmez. AB kullanıcıları için Google onay (UMP) formu gösterilir. */
