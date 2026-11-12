@@ -107,6 +107,7 @@ body{ margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2));
 .toast{ position:fixed; left:50%; bottom:130px; transform:translateX(-50%); max-width:86%; background:rgba(10,14,40,.95); color:#fff; padding:10px 16px; border-radius:14px; font-weight:800; font-size:15px; text-align:center; z-index:99; pointer-events:none; box-shadow:0 6px 18px rgba(0,0,0,.45); border:1.5px solid rgba(79,224,160,.6); }
 .play-ic{ width:1.25em; height:1.25em; margin-right:8px; flex:none; display:block; }
 .ad-continue-btn, .go-boost button{ display:flex; align-items:center; justify-content:center; }
+.ad-continue-btn[hidden], .go-boost button[hidden]{ display:none !important; }
 .boost-btn .cnt.ad{ min-width:20px; height:20px; padding:0; background:linear-gradient(160deg,#4fe0a0,#18c98a); box-shadow:0 1px 4px rgba(0,0,0,.35); }
 .boost-btn .cnt.ad svg{ width:10px; height:10px; display:block; margin-left:1px; }
 .rankbtn{ display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:14px;
@@ -1571,7 +1572,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b9';
+var BUILD='b10';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
