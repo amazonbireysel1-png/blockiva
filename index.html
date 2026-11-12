@@ -1571,7 +1571,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b7';
+var BUILD='b8';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
@@ -1587,7 +1587,7 @@ var BUILD='b7';
 (function(){ var d=document.createElement('div'); d.style.cssText='position:fixed;left:6px;bottom:3px;font:9px monospace;color:#fff;opacity:.5;z-index:98;pointer-events:none';
   document.body.appendChild(d);
   function upd(){ var C=window.Capacitor, nat=!!(C&&C.isNativePlatform&&C.isNativePlatform());
-    d.textContent=BUILD+' g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||'')+' r:'+(Ads.eR||'')+' i:'+(Ads.eI||''); }
+    d.textContent=BUILD+' g'+(Ads.st.games||0)+' '+(nat?'N':'W')+(Ads.realRewarded?'R':'-')+(Ads.realInterstitial?'I':'-')+' '+(Ads.via||'')+' r:'+(Ads.eR||'')+' i:'+(Ads.eI||'')+' e:'+(Ads.ev||'')+(Ads.eR2?' '+Ads.eR2:''); }
   upd(); setInterval(upd,1000); })();
 /* ---- Gerçek AdMob (yalnızca Capacitor Android uygulamasında; web ve eski Median uygulamasında bu blok çalışmaz) ----
    Ödüllü reklam hazır değilse en fazla 5 sn beklenir; yine gelmezse oyuncu cezalandırılmaz, ödül verilir.
@@ -1607,11 +1607,15 @@ var BUILD='b7';
     }).catch(function(){});
   }).catch(function(){}).then(function(){ started=true; prepRew(); prepInt(); });
   AM.addListener('onRewardedVideoAdReward', function(){ earned=true; });
+  // tanı: son gelen reklam olayını etikete yaz
+  ['onRewardedVideoAdLoaded','onRewardedVideoAdFailedToLoad','onRewardedVideoAdShowed','onRewardedVideoAdFailedToShow','onRewardedVideoAdDismissed','onRewardedVideoAdReward','interstitialAdLoaded','interstitialAdFailedToLoad','interstitialAdShowed','interstitialAdFailedToShow','interstitialAdDismissed'].forEach(function(ev){
+    try{ AM.addListener(ev, function(info){ Ads.ev=ev.replace('onRewardedVideoAd','R.').replace('interstitialAd','I.'); if (/Failed/.test(ev)) Ads.eR2=JSON.stringify(info||{}).slice(0,60); }); }catch(e){} });
   function once(ev, fn){ var h=null, done=false;
     AM.addListener(ev, function(){ if (done) return; done=true; if (h && h.remove) h.remove(); fn(); }).then(function(x){ h=x; });
     return function(){ if (done) return false; done=true; if (h && h.remove) h.remove(); return true; }; }
   Ads.realRewarded=function(ok, fail){
-    function show(){
+    function show(){ try{ showInner(); }catch(e){ Ads.via='exc:'+String((e&&e.message)||e).slice(0,40); ok(); prepRew(); } }
+    function showInner(){
       earned=false; rewReady=false; Ads.via='show';
       var shown=false, tShow=Date.now();
       // reklam 6 sn'den kısa sürede ödülsüz kapandıysa oyuncu atlamış olamaz (reklam bozuk/boş açılmış): hak yine verilir
