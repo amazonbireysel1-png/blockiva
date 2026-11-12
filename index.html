@@ -1571,7 +1571,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b8';
+var BUILD='b9';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
@@ -1611,7 +1611,7 @@ var BUILD='b8';
   ['onRewardedVideoAdLoaded','onRewardedVideoAdFailedToLoad','onRewardedVideoAdShowed','onRewardedVideoAdFailedToShow','onRewardedVideoAdDismissed','onRewardedVideoAdReward','interstitialAdLoaded','interstitialAdFailedToLoad','interstitialAdShowed','interstitialAdFailedToShow','interstitialAdDismissed'].forEach(function(ev){
     try{ AM.addListener(ev, function(info){ Ads.ev=ev.replace('onRewardedVideoAd','R.').replace('interstitialAd','I.'); if (/Failed/.test(ev)) Ads.eR2=JSON.stringify(info||{}).slice(0,60); }); }catch(e){} });
   function once(ev, fn){ var h=null, done=false;
-    AM.addListener(ev, function(){ if (done) return; done=true; if (h && h.remove) h.remove(); fn(); }).then(function(x){ h=x; });
+    var r=AM.addListener(ev, function(){ if (done) return; done=true; if (h && h.remove) h.remove(); fn(); }); if (r && typeof r.then==='function') r.then(function(x){ h=x; }); else h=r;
     return function(){ if (done) return false; done=true; if (h && h.remove) h.remove(); return true; }; }
   Ads.realRewarded=function(ok, fail){
     function show(){ try{ showInner(); }catch(e){ Ads.via='exc:'+String((e&&e.message)||e).slice(0,40); ok(); prepRew(); } }
