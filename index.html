@@ -998,7 +998,7 @@ mBtn.addEventListener('click', function(){
 mAdBtn.addEventListener('click', function(){
   /* oyun başına 1 kez: ödüllü reklam izlenince devam */
   overlay.hidden=true;
-  if (Ads.isNewPlayer()){ continueAfterAd(); return; } // ilk 3 oyunda reklamsız devam
+  if (Ads.isNewPlayer()){ continueAfterAd(); return; } // ilk 2 oyunda reklamsız devam
   Ads.showRewarded(tx('revive_text'), function(){ Ads.rewardedThisGame=true; continueAfterAd(); },
                    function(){ overlay.hidden=false; });
 });
@@ -1559,12 +1559,13 @@ function refreshBoosterUI(){
 /* ---- Reklamlar ----
    Şimdilik gerçek reklam YOK: ödüllü reklamın yerinde kısa bir bekleme ekranı var, araya giren reklam hiçbir şey göstermez.
    Capacitor + AdMob bağlanınca yalnızca Ads.realRewarded / Ads.realInterstitial doldurulacak, oyunun geri kalanı değişmeyecek.
-   Yeni oyuncu (ilk 3 oyun): araya giren reklam yok, devam hakkı reklamsız.
-   Araya giren reklam kuralları: ilk 3 oyunda yok, sonra 3 oyunda bir (4., 7., 10. oyun), son reklamdan en az 90 sn sonra,
+   Yeni oyuncu (ilk 2 oyun): devam hakkı reklamsız.
+   Araya giren reklam kuralları: 2. oyundan sonra, sonra 2 oyunda bir (2., 4., 6., 8., 10. oyun), son reklamdan en az 90 sn sonra,
    o oyunda zaten ödüllü reklam izlendiyse yok. */
 var Ads={
   rewardedThisGame:false,
-  FREE_GAMES:3, // yeni oyuncu: ilk 3 oyunda araya giren reklam yok, devam hakkı reklamsız
+  FREE_GAMES:2, // yeni oyuncu: ilk 2 oyunda devam hakkı reklamsız
+  INTER_FROM:2, INTER_EVERY:2, // araya giren reklam: 2. oyundan sonra, sonra 2 oyunda bir (2,4,6,8,10...)
   gameStarted:function(){ this.st.games=(this.st.games||0)+1; this.save(); }, // her yeni oyun başlayınca sayılır
   isNewPlayer:function(){ return (this.st.games||0) <= this.FREE_GAMES; }, // st.games = şu an oynanan oyunun sırası
   st:(function(){ try{ return JSON.parse(localStorage.getItem('renklibloklar_ads'))||{}; }catch(e){ return {}; } })(),
@@ -1581,7 +1582,7 @@ var Ads={
   },
   afterGame:function(next){
     var s=this.st, now=Date.now();
-    var show = s.games>this.FREE_GAMES && ((s.games-this.FREE_GAMES-1)%3===0) && (now-(s.last||0)>90000) && !this.rewardedThisGame;
+    var show = s.games>=this.INTER_FROM && ((s.games-this.INTER_FROM)%this.INTER_EVERY===0) && (now-(s.last||0)>90000) && !this.rewardedThisGame;
     this.rewardedThisGame=false;
     this.save();
     if (show && this.realInterstitial){ s.last=now; this.save(); this.realInterstitial(next); return; }
@@ -1590,7 +1591,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b13';
+var BUILD='b14';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
