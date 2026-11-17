@@ -1051,7 +1051,7 @@ mBtn.addEventListener('click', function(){
 mAdBtn.addEventListener('click', function(){
   /* oyun başına 1 kez: ödüllü reklam izlenince devam */
   overlay.hidden=true;
-  if (Ads.isNewPlayer()){ continueAfterAd(); return; } // ilk 2 oyunda reklamsız devam
+  if (Ads.isNewPlayer()){ Ads.st.freeUsed=1; Ads.save(); continueAfterAd(); return; } // tek seferlik ücretsiz devam: kullanılınca biter
   Ads.showRewarded(tx('revive_text'), function(){ Ads.rewardedThisGame=true; continueAfterAd(); },
                    function(){ overlay.hidden=false; });
 });
@@ -1617,10 +1617,10 @@ function refreshBoosterUI(){
    o oyunda zaten ödüllü reklam izlendiyse yok. */
 var Ads={
   rewardedThisGame:false,
-  FREE_GAMES:2, // yeni oyuncu: ilk 2 oyunda devam hakkı reklamsız
+  FREE_GAMES:2, // (artık kullanılmıyor) eski kural: ilk 2 oyunda devam reklamsız
   INTER_FROM:2, INTER_EVERY:2, // araya giren reklam: 2. oyundan sonra, sonra 2 oyunda bir (2,4,6,8,10...)
   gameStarted:function(){ this.st.games=(this.st.games||0)+1; this.save(); }, // her yeni oyun başlayınca sayılır
-  isNewPlayer:function(){ return (this.st.games||0) <= this.FREE_GAMES; }, // st.games = şu an oynanan oyunun sırası
+  isNewPlayer:function(){ return !this.st.freeUsed; }, // tek seferlik ücretsiz devam hakkı: kullanılana kadar durur (st.games yalnızca ara reklam sırası için)
   st:(function(){ try{ return JSON.parse(localStorage.getItem('renklibloklar_ads'))||{}; }catch(e){ return {}; } })(),
   save:function(){ try{ localStorage.setItem('renklibloklar_ads', JSON.stringify(this.st)); }catch(e){} },
   realRewarded:null,      // function(onReward, onFail) — AdMob bağlanınca
@@ -1644,7 +1644,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b17';
+var BUILD='b18';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
