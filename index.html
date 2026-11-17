@@ -17,6 +17,27 @@ if(gaOn){ try{
 <script>/* internet yokken 'internet yok' ekranı için küçük hizmet (oyunu önbelleğe almaz) */
 try{ if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }catch(e){}
 </script>
+<script>
+/* Internet yoksa oyunun üstüne "internet yok" ekranı koyar (oyun oynanamaz); internet gelince kendiliğinden kapanır. Oyun mantığına dokunmaz. */
+(function(){ try{
+  var tr=/^tr/i.test(navigator.language||'tr'), box=null;
+  function build(){
+    var st=document.createElement('style');
+    st.textContent='#nonet{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483647;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box;background:radial-gradient(circle at 50% 30%,#5f78d9,#3a4fac 70%);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none}'
+      +'#nonet svg{width:96px;height:96px;animation:nonetblink 1s infinite}@keyframes nonetblink{0%,100%{opacity:1}50%{opacity:.15}}'
+      +'#nonet h1{font-size:22px;margin:22px 0 8px}#nonet p{margin:0;color:#c3ccf7;font-size:15px;line-height:1.4;max-width:300px}';
+    document.head.appendChild(st);
+    box=document.createElement('div'); box.id='nonet';
+    box.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#ff3b3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.4a10.5 10.5 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="#ff3b3b"/><path d="M3 3l18 18"/></svg>'
+      +'<h1>'+(tr?'İnternet bağlantısı yok':'No internet connection')+'</h1>'
+      +'<p>'+(tr?'Blockiva\'yı oynamak için internete bağlan. Bağlantı gelince oyun kaldığın yerden devam eder.':'Connect to the internet to play Blockiva. The game continues where you left off when you are back online.')+'</p>';
+    document.body.appendChild(box);
+  }
+  function upd(){ if(!box) build(); box.style.display = (navigator.onLine===false) ? 'flex' : 'none'; }
+  window.addEventListener('offline', upd); window.addEventListener('online', upd);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', upd); else upd();
+}catch(e){} })();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 /* layout: single committed world — deep navy jewel-arcade, 8x8 board, 3-piece tray, glowing line-clear bursts. */
