@@ -706,7 +706,7 @@ var goStage=1, goRankInfo=null, goRankLoading=false, goJingle=false;
 function canUseShuffle(){ return daily.charges.shuffle>0; }
 function canAdShuffle(){ return !adShuffleUsed && !Ads.isNewPlayer(); }
 function gameOverNoMoves(){
-  over=true;
+  over=true; goAdHandled=false;
   track('oyun_bitti',{skor:score});
   flushScore();
   goJingle=false;
@@ -1028,9 +1028,18 @@ function attachPieceDrag(el, piece, idx, mini){
     window.addEventListener('pointerup', onUp, {once:true});
   });
 }
+var goAdHandled=false, goAdBusy=false;
 mBtn.addEventListener('click', function(){
-  if (over && goStage<2){ goStage=2; applyGoStage(); return; }
-  /* sonuç kartından "Yeniden Oyna": kurallara uyuyorsa araya reklam, sonra yeni oyun */
+  if (goAdBusy) return;
+  if (over && goStage<2){
+    /* "Hayır teşekkürler": kurallara uyuyorsa önce araya reklam, sonra skor/lig kartı */
+    goAdHandled=true; goAdBusy=true;
+    Ads.afterGame(function(){ goAdBusy=false; goStage=2; applyGoStage(); });
+    return;
+  }
+  /* sonuç kartından "Yeniden Oyna": reklam zaten "Hayır teşekkürler"de değerlendirildiyse direkt yeni oyun,
+     değilse (teklif ekranı hiç çıkmadıysa) eski gibi burada değerlendirilir */
+  if (goAdHandled){ goAdHandled=false; newGame(); return; }
   Ads.afterGame(function(){ newGame(); });
 });
 mAdBtn.addEventListener('click', function(){
@@ -1629,7 +1638,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b15';
+var BUILD='b16';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
