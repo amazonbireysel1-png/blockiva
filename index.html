@@ -14,6 +14,9 @@ if(gaOn){ try{
   var ga=document.createElement('script'); ga.async=true; ga.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID; document.head.appendChild(ga);
 }catch(e){} }
 </script>
+<script>/* internet yokken 'internet yok' ekranı için küçük hizmet (oyunu önbelleğe almaz) */
+try{ if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }catch(e){}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 /* layout: single committed world — deep navy jewel-arcade, 8x8 board, 3-piece tray, glowing line-clear bursts. */
