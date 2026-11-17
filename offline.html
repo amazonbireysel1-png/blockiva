@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blockiva</title>
+<style>
+html,body{margin:0;height:100%;background:#3a4fac;background:radial-gradient(circle at 50% 30%,#5f78d9,#3a4fac 70%);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.w{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+svg{width:96px;height:96px;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+h1{font-size:22px;margin:22px 0 8px}
+p{margin:0;color:#c3ccf7;font-size:15px;line-height:1.4;max-width:300px}
+button{margin-top:26px;padding:12px 28px;border:0;border-radius:14px;background:#ffd166;color:#232d63;font-weight:800;font-size:16px}
+</style></head><body>
+<div class="w">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#ff3b3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.4a10.5 10.5 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="#ff3b3b"/>
+    <path d="M3 3l18 18"/>
+  </svg>
+  <h1 id="t">İnternet bağlantısı yok</h1>
+  <p id="m">Blockiva'yı oynamak için internete bağlan. Bağlantı gelince oyun otomatik açılır.</p>
+  <button id="b" type="button">Tekrar dene</button>
+</div>
+<script>
+(function(){
+  var tr=/^tr/i.test(navigator.language||'tr');
+  if(!tr){ document.documentElement.lang='en'; t.textContent='No internet connection'; m.textContent='Connect to the internet to play Blockiva. The game opens automatically when you are back online.'; b.textContent='Try again'; }
+  function go(){ location.reload(); }
+  b.addEventListener('click', go);
+  window.addEventListener('online', go);
+})();
+</script></body></html>
