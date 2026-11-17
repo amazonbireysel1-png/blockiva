@@ -712,9 +712,15 @@ function gameOverNoMoves(){
   goJingle=false;
   goRankInfo=null; goRankLoading=true;
   goStage = (canUseShuffle()||canAdShuffle()||!continuedThisGame) ? 0 : 2; // tek teklif ekranı: Karıştır + Devam Et birlikte
+  if (typeof startGoRank==='function') startGoRank();
+  if (goStage===2){
+    /* teklif ekranı çıkmayacak (hak kullanılmış): araya reklam kuralı varsa reklam skor kartından ÖNCE gösterilir */
+    goAdHandled=true; goAdBusy=true;
+    Ads.afterGame(function(){ goAdBusy=false; applyGoStage(); overlay.hidden=false; });
+    return;
+  }
   applyGoStage();
   overlay.hidden=false;
-  if (typeof startGoRank==='function') startGoRank();
 }
 var PLAY_SVG='<svg class="play-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#053323"/><path d="M9.3 7v10l8-5z" fill="#4fe0a0"/></svg>';
 function adBtnHTML(label){ return PLAY_SVG+'<span>'+label+'</span>'; }
@@ -1638,7 +1644,7 @@ var Ads={
 };
 var bootCounted=pendingGameStart;
 if (pendingGameStart){ pendingGameStart=false; Ads.gameStarted(); }
-var BUILD='b16';
+var BUILD='b17';
 /* Kendini güncelleme: telefon önbellekten eski sayfayı açtıysa, sunucudaki sürüm farklıysa yeni sürüme geçer (veri silmeye gerek yok) */
 (function(){ try{
   fetch(location.pathname+'?t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
